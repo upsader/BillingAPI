@@ -1,0 +1,11 @@
+/BillingAPI.API/bin
+/BillingAPI.API/obj
+/BillingAPI.Tests/bin
+/BillingAPI.Tests/obj
+/BillingAPI.Services/bin
+/BillingAPI.Services/obj
+/BillingAPI.Core/obj
+/BillingAPI.Core/bin
+/BillingAPI.Infrastructure/bin
+/BillingAPI.Infrastructure/obj
+.vs/
