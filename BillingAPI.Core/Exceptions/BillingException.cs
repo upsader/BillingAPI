@@ -1,4 +1,7 @@
-﻿public abstract class BillingException : Exception
+﻿namespace BillingAPI.Core.Exceptions
 {
-    protected BillingException(string message) : base(message) { }
+    public abstract class BillingException : Exception
+    {
+        protected BillingException(string message) : base(message) { }
+    }
 }

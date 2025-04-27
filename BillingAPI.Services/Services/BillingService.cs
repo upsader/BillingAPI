@@ -9,10 +9,7 @@ public class BillingService : IBillingService
     private readonly IReceiptRepository _receiptRepository;
     private readonly ILogger<BillingService> _logger;
 
-    public BillingService(
-        IPaymentGatewayFactory paymentGatewayFactory,
-        IReceiptRepository receiptRepository,
-        ILogger<BillingService> logger)
+    public BillingService(IPaymentGatewayFactory paymentGatewayFactory, IReceiptRepository receiptRepository, ILogger<BillingService> logger)
     {
         _paymentGatewayFactory = paymentGatewayFactory;
         _receiptRepository = receiptRepository;
@@ -32,8 +29,7 @@ public class BillingService : IBillingService
 
             if (!paymentResult.IsSuccess)
             {
-                throw new PaymentProcessingException(
-                    paymentResult.ErrorMessage ?? $"Payment failed for order {order.OrderNumber}");
+                throw new PaymentProcessingException(paymentResult.Message ?? $"Payment failed for order {order.OrderNumber}");
             }
 
             var receipt = new Receipt

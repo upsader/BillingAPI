@@ -4,6 +4,6 @@ namespace BillingAPI.Core.Models
     {
         public bool IsSuccess { get; set; }
         public string? TransactionId { get; set; }
-        public string? ErrorMessage { get; set; }
+        public string? Message { get; set; }
     }
 }
