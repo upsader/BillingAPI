@@ -20,45 +20,41 @@ public class BillingService : IBillingService
     {
         _logger.LogInformation("Processing order {OrderNumber}", order.OrderNumber);
 
-        try
+        ValidateOrder(order);
+        var paymentGateway = _paymentGatewayFactory.GetGateway(order.PaymentGateway);
+
+        var paymentResult = await paymentGateway.ProcessPaymentAsync(order);
+
+        if (!paymentResult.IsSuccess)
         {
-            ValidateOrder(order);
-            var paymentGateway = _paymentGatewayFactory.GetGateway(order.PaymentGateway);
-
-            var paymentResult = await paymentGateway.ProcessPaymentAsync(order);
-
-            if (!paymentResult.IsSuccess)
-            {
-                throw new PaymentProcessingException(paymentResult.Message ?? $"Payment failed for order {order.OrderNumber}");
-            }
-
-            var receipt = new Receipt
-            {
-                Id = Guid.NewGuid().ToString(),
-                OrderNumber = order.OrderNumber,
-                UserId = order.UserId,
-                Amount = order.PayableAmount,
-                PaymentGateway = order.PaymentGateway,
-                ProcessedDate = DateTime.UtcNow,
-                TransactionId = paymentResult.TransactionId,
-                Description = order.Description
-            };
-
-            await _receiptRepository.AddAsync(receipt);
-            await _receiptRepository.SaveChangesAsync();
-
-            return receipt;
+            throw new PaymentProcessingException(paymentResult.Message ?? $"Payment failed for order {order.OrderNumber}");
         }
-        catch (Exception ex)
+
+        var receipt = new Receipt
         {
-            _logger.LogError(ex, "Error processing order {OrderNumber}", order.OrderNumber);
-            throw;
+            Id = Guid.NewGuid().ToString(),
+            OrderNumber = order.OrderNumber,
+            UserId = order.UserId,
+            Amount = order.PayableAmount,
+            PaymentGateway = order.PaymentGateway,
+            ProcessedDate = DateTime.UtcNow,
+            TransactionId = paymentResult.TransactionId,
+            Description = order.Description
+        };
+
+        if (await _receiptRepository.OrderNumberExistsAsync(order.OrderNumber))
+        {
+            throw new ValidationException($"Order number {order.OrderNumber} already exists");
         }
+
+        await _receiptRepository.AddAsync(receipt);
+        await _receiptRepository.SaveChangesAsync();
+
+        return receipt;
     }
+
     public async Task<Receipt> GetReceiptAsync(string orderNumber)
     {
-        _logger.LogInformation("Retrieving receipt for order {OrderNumber}", orderNumber);
-
         var receipt = await _receiptRepository.GetByOrderNumberAsync(orderNumber);
 
         if (receipt == null)
@@ -73,18 +69,31 @@ public class BillingService : IBillingService
     private void ValidateOrder(OrderRequest order)
     {
         if (order == null)
+        {
             throw new ArgumentNullException(nameof(order));
+        }
 
         if (string.IsNullOrWhiteSpace(order.OrderNumber))
+        {
             throw new ValidationException("Order number is required");
 
+        }
+
         if (string.IsNullOrWhiteSpace(order.UserId))
+        {
             throw new ValidationException("User ID is required");
 
+        }
+
         if (order.PayableAmount <= 0)
+        {
             throw new ValidationException("Payable amount must be greater than zero");
 
+        }
+
         if (string.IsNullOrWhiteSpace(order.PaymentGateway))
+        {
             throw new ValidationException("Payment gateway is required");
+        }
     }
 }

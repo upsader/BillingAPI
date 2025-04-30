@@ -1,5 +1,4 @@
-﻿using BillingAPI.Core.Exceptions;
-using BillingAPI.Core.Interfaces;
+﻿using BillingAPI.Core.Interfaces;
 using BillingAPI.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,46 +9,30 @@ namespace BillingAPI.API.Controllers
     public class BillingController : ControllerBase
     {
         private readonly IBillingService _billingService;
+        private readonly ILogger<BillingController> _logger;
 
-        public BillingController(IBillingService billingService)
+        public BillingController(IBillingService billingService, ILogger<BillingController> logger)
         {
             _billingService = billingService;
+            _logger = logger;
         }
 
         [HttpPost("process-order")]
         public async Task<ActionResult<Receipt>> ProcessOrder([FromBody] OrderRequest request)
         {
-            try
-            {
-                var receipt = await _billingService.ProcessOrderAsync(request);
-                return Ok(receipt);
-            }
-            catch (ValidationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (PaymentProcessingException ex)
-            {
-                return StatusCode(402, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error");
-            }
+            _logger.LogInformation("Processing order {OrderNumber} for user {UserId}", request.OrderNumber, request.UserId);
+            var receipt = await _billingService.ProcessOrderAsync(request);
+            _logger.LogInformation("Order {OrderNumber} processed successfully", request.OrderNumber);
+            return Ok(receipt);
         }
 
         [HttpGet("receipts/{orderNumber}")]
         public async Task<ActionResult<Receipt>> GetReceipt(string orderNumber)
         {
-            try
-            {
-                var receipt = await _billingService.GetReceiptAsync(orderNumber);
-                return Ok(receipt);
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
+            _logger.LogInformation("Retrieving receipt for order {OrderNumber}", orderNumber);
+            var receipt = await _billingService.GetReceiptAsync(orderNumber);
+            _logger.LogInformation("Receipt for order {OrderNumber} retrieved successfully", orderNumber);
+            return Ok(receipt);
         }
     }
 }

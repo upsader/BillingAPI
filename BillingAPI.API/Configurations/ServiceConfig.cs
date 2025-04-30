@@ -42,9 +42,15 @@ namespace BillingAPI.API.Configurations
             // In development environment
             if (env.IsDevelopment())
             {
-                var mockFactory = new MockPaymentGatewayFactory();
-                mockFactory.InitializeDefaultGateways();
-                services.AddSingleton<IPaymentGatewayFactory>(mockFactory);
+                services.AddSingleton<IPaymentGatewayFactory>(provider =>
+                {
+                    var logger = provider.GetRequiredService<ILogger<MockPaymentGatewayFactory>>();
+                    var mockFactory = new MockPaymentGatewayFactory(logger);
+
+                    mockFactory.InitializeDefaultGateways();
+
+                    return mockFactory;
+                });
             }
             else
             {

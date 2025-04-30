@@ -7,7 +7,7 @@ namespace BillingAPI.Infrastructure.Data
     {
         public BillingDbContext(DbContextOptions<BillingDbContext> options) : base(options) { }
 
-        public DbSet<Receipt> Receipts { get; set; }
+        public virtual DbSet<Receipt> Receipts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

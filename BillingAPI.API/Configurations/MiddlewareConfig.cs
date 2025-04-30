@@ -1,4 +1,5 @@
 ﻿using BillingAPI.API.Models;
+using BillingAPI.Core.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using System.Net;
 
@@ -9,21 +10,37 @@ namespace BillingAPI.API.Configurations
         public static WebApplication ConfigureMiddleware(this WebApplication app, IWebHostEnvironment env)
         {
             // Exception Handling
-            app.UseExceptionHandler(appError =>
+            app.UseExceptionHandler(errorApp =>
             {
-                appError.Run(async context =>
+                errorApp.Run(async context =>
                 {
-                    context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                    context.Response.ContentType = "application/json";
-
-                    var contextFeature = context.Features.Get<IExceptionHandlerFeature>();
-                    if (contextFeature != null)
+                    var exceptionHandlerFeature = context.Features.Get<IExceptionHandlerFeature>();
+                    if (exceptionHandlerFeature != null)
                     {
-                        await context.Response.WriteAsync(new ErrorDetails
+                        var exception = exceptionHandlerFeature.Error;
+
+                        context.Response.ContentType = "application/json";
+
+                        var statusCode = exception switch
                         {
-                            StatusCode = context.Response.StatusCode,
-                            Message = "Internal Server Error",
-                        }.ToString());
+                            ArgumentNullException => StatusCodes.Status400BadRequest,
+                            ValidationException => StatusCodes.Status400BadRequest,
+                            NotFoundException => StatusCodes.Status404NotFound,
+                            PaymentProcessingException => StatusCodes.Status402PaymentRequired,
+                            _ => StatusCodes.Status500InternalServerError
+                        };
+
+                        context.Response.StatusCode = statusCode;
+
+                        var contextFeature = context.Features.Get<IExceptionHandlerFeature>();
+                        if (contextFeature != null)
+                        {
+                            await context.Response.WriteAsync(new ErrorDetails
+                            {
+                                StatusCode = statusCode,
+                                Message = exception.Message
+                            }.ToString());
+                        }
                     }
                 });
             });

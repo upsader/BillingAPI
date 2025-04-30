@@ -1,39 +1,35 @@
-﻿using BillingAPI.Core.Interfaces;
+﻿using BillingAPI.Core.Exceptions;
+using BillingAPI.Core.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace BillingAPI.Services.PaymentGateways
 {
     public class PaymentGatewayFactory : IPaymentGatewayFactory
     {
         private readonly Dictionary<string, IPaymentGateway> _gateways = [];
+        private readonly ILogger<PaymentGatewayFactory> _logger;
+
+        public PaymentGatewayFactory(ILogger<PaymentGatewayFactory> logger)
+        {
+            _logger = logger;
+        }
 
         public IPaymentGateway GetGateway(string gatewayId)
         {
-            if (string.IsNullOrWhiteSpace(gatewayId))
+            if (!_gateways.TryGetValue(gatewayId, out var gateway))
             {
-                throw new ArgumentException("Gateway ID cannot be empty", nameof(gatewayId));
+                _logger.LogWarning("No payment gateway registered for ID: {GatewayId}", gatewayId);
+                throw new NotFoundException($"No payment gateway registered for ID: {gatewayId}");
             }
 
-            if (_gateways.TryGetValue(gatewayId, out var gateway))
-            {
-                return gateway;
-            }
-
-            throw new ArgumentException($"No payment gateway registered for ID: {gatewayId}", nameof(gatewayId));
+            _logger.LogInformation("Successfully retrieved payment gateway for ID: {GatewayId}", gatewayId);
+            return gateway;
         }
 
         public void RegisterGateway(string gatewayId, IPaymentGateway gateway)
         {
-            if (string.IsNullOrWhiteSpace(gatewayId))
-            {
-                throw new ArgumentException("Gateway ID cannot be empty", nameof(gatewayId));
-            }
-
-            if (gateway == null)
-            {
-                throw new ArgumentNullException(nameof(gateway));
-            }
-
             _gateways[gatewayId] = gateway;
+            _logger.LogInformation("Successfully registered payment gateway for ID: {GatewayId}", gatewayId);
         }
     }
 }
