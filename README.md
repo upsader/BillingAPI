@@ -40,7 +40,7 @@ The solution consists of the following projects:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-repo/BillingAPI.git
+git clone https://github.com/upsader/BillingAPI.git
 cd BillingAPI
 ```
 
