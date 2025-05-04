@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<coverage line-rate="0.3209" branch-rate="0.45" version="1.9" timestamp="1746011307" lines-covered="130" lines-valid="405" branches-covered="18" branches-valid="40">
+<coverage line-rate="0.3209" branch-rate="0.45" version="1.9" timestamp="1746375453" lines-covered="130" lines-valid="405" branches-covered="18" branches-valid="40">
   <sources>
     <source>C:\Users\OKuzi\source\repos\BillingAPI\</source>
   </sources>
